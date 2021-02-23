@@ -4,13 +4,9 @@ JaCoCo xml report parser written in Kotlin.
 
 `jacoco-parser` can print output in JSON or Text (cut friendly, check examples below).
 
-## Build
+## Install
 
-`./gradlew installDist`
-
-> Create alias for convenience
->
-> `alias jacoco-parser='{path-to-bin}/bin/jacoco-parser'`
+`brew install jdsingh/repo/jacoco-parser`
 
 ## Usage
 
