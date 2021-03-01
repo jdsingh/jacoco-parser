@@ -1,4 +1,4 @@
-name: Kotlin CI with Gradle
+name: Build jacoco-parser
 
 on:
   push:
@@ -23,6 +23,6 @@ jobs:
       run: ./gradlew build
     - uses: actions/upload-artifact@v2
       with:
-        name: distributions
-        path: build/distributions/
+        name: jacoco-parser-0.0.1.zip
+        path: build/distributions/jacoco-parser-0.0.1.zip
         if-no-files-found: error
