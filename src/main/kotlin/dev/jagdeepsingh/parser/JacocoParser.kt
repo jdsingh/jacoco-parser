@@ -15,7 +15,7 @@ class JacocoParser {
         slurper.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
     }
 
-    fun parse(file: File): JacocoCoverage {
+    fun parse(file: File): ModuleCoverage {
         val result: GPathResult = slurper.parse(file)
         val formatter = DecimalFormat("##.##")
         val transformer = JacocoCoverageTransformer()

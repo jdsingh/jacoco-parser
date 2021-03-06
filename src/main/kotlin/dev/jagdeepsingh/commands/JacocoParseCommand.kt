@@ -5,37 +5,38 @@ import com.github.ajalt.clikt.completion.completionOption
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.validate
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
-import dev.jagdeepsingh.parser.JacocoCoverage
 import dev.jagdeepsingh.parser.JacocoParser
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import dev.jagdeepsingh.parser.ModuleCoverage
 import kotlin.system.measureTimeMillis
 
 class JacocoParseCommand : CliktCommand(
     name = "jacoco-parser",
     printHelpOnEmptyArgs = true,
-    help = """
-        Parse JaCoCo xml coverage report.
-    """.trimIndent(),
-    autoCompleteEnvvar = "jagdeep"
+    help = "Parse JaCoCo xml coverage report."
 ) {
 
     private val debug by option(
-        "--debug",
+        "-d", "--debug",
         help = "Enable debug logging"
     ).flag()
 
-    private val format by option(
-        "--output",
-        help = "Console Output format",
+    private val format: Format by option(
+        "-o", "--output",
+        help = "Output format",
         completionCandidates = CompletionCandidates.Fixed("TEXT", "JSON")
-    ).enum<Format>()
+    ).enum<Format>().default(Format.TEXT)
 
-    private val report by argument(name = "report.xml")
+    private val short: Boolean by option(
+        "-s", "--short",
+        help = "Give the output in the short-format."
+    ).flag()
+
+    private val report by argument(name = "jacoco-report.xml")
         .file(mustExist = true, canBeFile = true)
         .validate {
             require(it.extension == "xml") {
@@ -48,23 +49,32 @@ class JacocoParseCommand : CliktCommand(
     }
 
     override fun run() {
-        val parser = JacocoParser()
-
-        val coverage: JacocoCoverage
-        val time = measureTimeMillis {
-            coverage = parser.parse(report)
-        }
-
-        when (format) {
-            Format.JSON -> println(Json.encodeToString(coverage))
-            Format.TEXT,
-            null -> println(coverage.toString())
-        }
-
+        val time = measureTimeMillis { parseReport() }
         if (debug) {
             println("Execution time: $time ms")
         }
     }
 
-    enum class Format { TEXT, JSON }
+    private fun parseReport() {
+        val parser = JacocoParser()
+        val coverage: ModuleCoverage = parser.parse(report)
+        when (format) {
+            Format.JSON -> {
+                if (short) {
+                    println(coverage.toShort().toJson())
+                } else {
+                    println(coverage.toJson())
+                }
+            }
+            Format.TEXT -> {
+                if (short) {
+                    println(coverage.toShort())
+                } else {
+                    println(coverage)
+                }
+            }
+        }
+    }
 }
+
+private enum class Format { TEXT, JSON }

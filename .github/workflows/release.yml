@@ -46,24 +46,3 @@ jobs:
         env:
           GHR_PATH: build/distributions/jacoco-parser-0.0.2.zip
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-#  publish:
-#    runs-on: ubuntu-latest
-#    needs: release
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v2
-#
-#      - name: Checkout homebrew-repo
-#        uses: actions/checkout@v2
-#        with:
-#          repository: jdsingh/homebrew-repo
-#          path: homebrew-repo
-#
-#      - uses: actions/download-artifact@v2
-#        with:
-#          name: jacoco-parser-0.0.2.zip
-#          path: homebrew-repo/jacoco-parser-0.0.2.zip
-#
-#      - name: Update jacoco-parser verion in Formula/jacoco-parser.rb
-#        run: ./scripts/publish.sh 0.0.2

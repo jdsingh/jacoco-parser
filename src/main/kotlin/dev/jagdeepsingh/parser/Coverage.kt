@@ -2,14 +2,16 @@ package dev.jagdeepsingh.parser
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @Serializable
 data class Coverage(
-    val type: String,
-    val covered: Long,
-    val missed: Long,
-    val total: Long,
-    val coverage: Double,
+    @SerialName("type") val type: String,
+    @SerialName("covered") val covered: Long,
+    @SerialName("missed") val missed: Long,
+    @SerialName("total") val total: Long,
+    @SerialName("coverage") val coverage: Double,
     @SerialName("coverage_text") val coverageText: String
 ) {
 
@@ -19,15 +21,25 @@ data class Coverage(
 }
 
 @Serializable
-data class JacocoCoverage(
+data class ModuleCoverage(
     @SerialName("module_name") val moduleName: String,
-    val instruction: Coverage?,
-    val branch: Coverage?,
-    val line: Coverage?,
-    val complexity: Coverage?,
-    val method: Coverage?,
-    @SerialName("class") val classCoverage: Coverage?
+    @SerialName("instruction") val instruction: Coverage,
+    @SerialName("branch") val branch: Coverage,
+    @SerialName("line") val line: Coverage,
+    @SerialName("complexity") val complexity: Coverage,
+    @SerialName("method") val method: Coverage,
+    @SerialName("class") val classCoverage: Coverage
 ) {
+
+    fun toJson(): String {
+        return Json.encodeToString(this)
+    }
+
+    fun toShort() = ModuleCoverageShort(
+        module = moduleName,
+        type = instruction.type,
+        coverage = instruction.coverageText
+    )
 
     override fun toString(): String {
         return buildString {
@@ -42,17 +54,20 @@ data class JacocoCoverage(
     }
 }
 
-class JacocoCoverageTransformer {
+@Serializable
+data class ModuleCoverageShort(
+    @SerialName("module_name") val module: String,
+    @SerialName("type") val type: String,
+    @SerialName("coverage") val coverage: String,
+) {
 
-    fun transform(moduleName: String, coverageList: List<Coverage>): JacocoCoverage {
-        return JacocoCoverage(
-            moduleName = moduleName,
-            instruction = coverageList.find { it.type == "INSTRUCTION" },
-            branch = coverageList.find { it.type == "BRANCH" },
-            line = coverageList.find { it.type == "LINE" },
-            complexity = coverageList.find { it.type == "COMPLEXITY" },
-            method = coverageList.find { it.type == "METHOD" },
-            classCoverage = coverageList.find { it.type == "CLASS" }
-        )
+    fun toJson(): String {
+        return Json.encodeToString(this)
+    }
+
+    override fun toString(): String {
+        return buildString {
+            append("Module: $module, Type: $type, Coverage: $coverage")
+        }
     }
 }
