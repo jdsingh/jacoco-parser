@@ -24,8 +24,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: jacoco-parser-0.0.2.zip
-          path: build/distributions/jacoco-parser-0.0.2.zip
+          name: jacoco-parser-0.0.3.zip
+          path: build/distributions/jacoco-parser-0.0.3.zip
           if-no-files-found: error
 
   release:
@@ -34,8 +34,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v2
         with:
-          name: jacoco-parser-0.0.2.zip
-          path: build/distributions/jacoco-parser-0.0.2.zip
+          name: jacoco-parser-0.0.3.zip
+          path: build/distributions/jacoco-parser-0.0.3.zip
 
       - name: Display structure of downloaded files
         run: ls -Rs
@@ -44,5 +44,5 @@ jobs:
         uses: fnkr/github-action-ghr@v1
         if: startsWith(github.ref, 'refs/tags/')
         env:
-          GHR_PATH: build/distributions/jacoco-parser-0.0.2.zip
+          GHR_PATH: build/distributions/jacoco-parser-0.0.3.zip
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

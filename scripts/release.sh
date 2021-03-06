@@ -103,7 +103,7 @@ publish_new_version_to_git() {
   git add .github/workflows/build.yml
   git commit -m "Release v$NEW_VERSION"
   git tag "v$NEW_VERSION"
-  git push test main --tags
+  git push origin main --tags
 }
 
 OPTIONS=$1
