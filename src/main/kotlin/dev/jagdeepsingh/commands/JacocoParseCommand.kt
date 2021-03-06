@@ -48,7 +48,7 @@ class JacocoParseCommand : CliktCommand(
     init {
         completionOption()
         versionOption(
-            version = "0.0.4",
+            version = "0.0.5",
             names = setOf("-v", "--version")
         )
     }
