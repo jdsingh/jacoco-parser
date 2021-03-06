@@ -1,4 +1,4 @@
-# jacoco-parser
+# jacoco-parser [![Build jacoco-parser](https://github.com/jdsingh/jacoco-parser/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/jdsingh/jacoco-parser/actions/workflows/build.yml)
 
 JaCoCo xml report parser written in Kotlin.
 
