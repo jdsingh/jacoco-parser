@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.arguments.validate
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import dev.jagdeepsingh.parser.JacocoParser
@@ -33,7 +34,7 @@ class JacocoParseCommand : CliktCommand(
 
     private val short: Boolean by option(
         "-s", "--short",
-        help = "Give the output in the short-format."
+        help = "Give the output in the short-format"
     ).flag()
 
     private val report by argument(name = "jacoco-report.xml")
@@ -46,6 +47,10 @@ class JacocoParseCommand : CliktCommand(
 
     init {
         completionOption()
+        versionOption(
+            version = "0.0.3",
+            names = setOf("-v", "--version")
+        )
     }
 
     override fun run() {

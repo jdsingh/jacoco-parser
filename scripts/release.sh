@@ -95,12 +95,13 @@ update_github_workflows() {
 update_build_gradle() {
   sed -i '' "s/$CURRENT_VERSION/$NEW_VERSION/g" build.gradle.kts
   print_success "Updated build.gradle.kts\n"
+
+  sed -i '' "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/g" src/main/kotlin/dev/jagdeepsingh/commands/JacocoParseCommand.kt
+  print_success "Updated src/main/kotlin/dev/jagdeepsingh/commands/JacocoParseCommand.kt"
 }
 
 publish_new_version_to_git() {
-  git add build.gradle.kts
-  git add .github/workflows/release.yml
-  git add .github/workflows/build.yml
+  git add .
   git commit -m "Release v$NEW_VERSION"
   git tag "v$NEW_VERSION"
   git push origin main --tags
