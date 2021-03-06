@@ -5,19 +5,13 @@
     2. Add a link URL to ensure the header link works.
     3. Add a new `Unreleased` section to the top.
 
-2. Commit
+2. Run release script
 
    ```
-   $ git commit -am "Prepare version X.Y.X"
+   $ ./script/release.sh X.Y.Z
    ```
 
-3. Tag
-
-   ```
-   $ git tag -am "Version X.Y.Z" X.Y.Z
-   ```
-
-4. Push!
+3. Push!
 
    ```
    $ git push && git push --tags

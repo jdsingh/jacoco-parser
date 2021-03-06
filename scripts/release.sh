@@ -92,6 +92,11 @@ update_build_gradle() {
   print_success "Updated src/main/kotlin/dev/jagdeepsingh/commands/JacocoParseCommand.kt"
 }
 
+git_commit_and_tag() {
+  git commit -am "Prepare version $NEW_VERSION"
+  git tag -am "Version $NEW_VERSION"
+}
+
 OPTIONS=$1
 NEW_VERSION=$1
 
@@ -102,3 +107,4 @@ validate_current_branch_is_main
 
 get_current_version
 update_build_gradle
+git_commit_and_tag
