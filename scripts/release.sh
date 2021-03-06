@@ -68,11 +68,6 @@ validate_new_version() {
   fi
 }
 
-get_current_version() {
-  CURRENT_VERSION=$(grep 'version = ' build.gradle.kts | cut -d'"' -f2)
-  print_info "Current jacoco-parser version is v$CURRENT_VERSION"
-}
-
 validate_current_branch_is_main() {
   local current_branch
   current_branch=$(git branch --show-current)
@@ -84,12 +79,9 @@ validate_current_branch_is_main() {
   fi
 }
 
-update_github_workflows() {
-  sed -i '' "s/$CURRENT_VERSION/$NEW_VERSION/g" .github/workflows/build.yml
-  print_success "\nUpdated .github/workflows/build.yml"
-
-  sed -i '' "s/$CURRENT_VERSION/$NEW_VERSION/g" .github/workflows/release.yml
-  print_success "Updated .github/workflows/release.yml"
+get_current_version() {
+  CURRENT_VERSION=$(grep 'version = ' build.gradle.kts | cut -d'"' -f2)
+  print_info "Current jacoco-parser version is v$CURRENT_VERSION"
 }
 
 update_build_gradle() {
@@ -100,11 +92,9 @@ update_build_gradle() {
   print_success "Updated src/main/kotlin/dev/jagdeepsingh/commands/JacocoParseCommand.kt"
 }
 
-publish_new_version_to_git() {
-  git add .
-  git commit -m "Release v$NEW_VERSION"
-  git tag "v$NEW_VERSION"
-  git push origin main --tags
+git_commit_and_tag() {
+  git commit -am "Prepare version $NEW_VERSION"
+  git tag -am "Version $NEW_VERSION" "$NEW_VERSION"
 }
 
 OPTIONS=$1
@@ -113,10 +103,8 @@ NEW_VERSION=$1
 options
 
 validate_new_version
-validate_current_branch_is_main
+# validate_current_branch_is_main
 
 get_current_version
-
-update_github_workflows
 update_build_gradle
-publish_new_version_to_git
+git_commit_and_tag
