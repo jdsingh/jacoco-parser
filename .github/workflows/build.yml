@@ -25,6 +25,6 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: jacoco-parser-0.0.3.zip
-          path: build/distributions/jacoco-parser-0.0.3.zip
+          name: jacoco-parser-0.0.4.zip
+          path: build/distributions/jacoco-parser-0.0.4.zip
           if-no-files-found: error
