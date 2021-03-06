@@ -94,7 +94,7 @@ update_build_gradle() {
 
 git_commit_and_tag() {
   git commit -am "Prepare version $NEW_VERSION"
-  git tag -am "Version $NEW_VERSION"
+  git tag -am "Version $NEW_VERSION" "$NEW_VERSION"
 }
 
 OPTIONS=$1
@@ -103,7 +103,7 @@ NEW_VERSION=$1
 options
 
 validate_new_version
-validate_current_branch_is_main
+# validate_current_branch_is_main
 
 get_current_version
 update_build_gradle

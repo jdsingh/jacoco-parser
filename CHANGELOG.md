@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.0.6] - 2021-03-07
+
+* Test release.
+
 ## [0.0.5] - 2021-03-07
 
  * Test release.
@@ -23,7 +27,9 @@
  * Initial release.
 
 
-[Unreleased]: https://github.com/jdsingh/jacoco-parser/compare/0.0.4...HEAD
+[Unreleased]: https://github.com/jdsingh/jacoco-parser/compare/0.0.6...HEAD
+[0.0.6]: https://github.com/jdsingh/jacoco-parser/releases/tag/0.0.6
+[0.0.5]: https://github.com/jdsingh/jacoco-parser/releases/tag/0.0.5
 [0.0.4]: https://github.com/jdsingh/jacoco-parser/releases/tag/0.0.4
 [0.0.3]: https://github.com/jdsingh/jacoco-parser/releases/tag/0.0.3
 [0.0.2]: https://github.com/jdsingh/jacoco-parser/releases/tag/0.0.2
