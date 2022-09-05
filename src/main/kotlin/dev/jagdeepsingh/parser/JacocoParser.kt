@@ -1,5 +1,10 @@
 package dev.jagdeepsingh.parser
 
+import dev.jagdeepsingh.parser.models.Coverage
+import dev.jagdeepsingh.parser.models.CoverageFactory
+import dev.jagdeepsingh.parser.models.CoverageFactory.Companion.ATTRIBUTE_TYPE
+import dev.jagdeepsingh.parser.models.ModuleCoverage
+import dev.jagdeepsingh.parser.models.PackageCoverage
 import groovy.xml.XmlSlurper
 import groovy.xml.slurpersupport.GPathResult
 import groovy.xml.slurpersupport.NodeChild
@@ -16,49 +21,53 @@ class JacocoParser {
     }
 
     fun parse(file: File): ModuleCoverage {
-        val result: GPathResult = slurper.parse(file)
         val formatter = DecimalFormat("##.##")
+        val coverageFactory = CoverageFactory(formatter = formatter)
         val transformer = JacocoCoverageTransformer()
 
+        val result: GPathResult = slurper.parse(file)
         val moduleName = (result as NodeChild).attributes()[ATTRIBUTE_NAME] as String
         val coverageList = mutableListOf<Coverage>()
+        val packageCoverage = mutableListOf<PackageCoverage>()
 
         result.children()
-            .filter {
-                it as NodeChild
-                it.name() == NODE_NAME_COUNTER
-            }.mapTo(coverageList) {
-                it as NodeChild
-                it.toCoverageReport(formatter)
+            .map { it as NodeChild }
+            .filter { node ->
+                val name = node.name()
+                val isCounter = name == NODE_NAME_COUNTER
+                val isPackage = name == NODE_NAME_PACKAGE
+
+                isCounter || isPackage
+            }
+            .map { node ->
+                if (node.name() == NODE_NAME_PACKAGE) {
+                    val packageName = node.attributes()[ATTRIBUTE_NAME] as String
+                    node.children()
+                        .map { it as NodeChild }
+                        .filter { it.name() == NODE_NAME_COUNTER }
+                        .filter { it.attributes()[ATTRIBUTE_TYPE] == "INSTRUCTION" }
+                        .mapTo(packageCoverage) {
+                            PackageCoverage(
+                                packageName = packageName.replace("/", "."),
+                                instruction = coverageFactory.from(it)
+                            )
+                        }
+                } else if (node.name() == NODE_NAME_COUNTER) {
+                    coverageList.add(coverageFactory.from(node))
+                }
+                node
             }
 
-        return transformer.transform(moduleName = moduleName, coverageList = coverageList)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun NodeChild.toCoverageReport(formatter: DecimalFormat): Coverage {
-        val attributes: Map<String, Any> = attributes() as Map<String, Any>
-        val type = attributes()[ATTRIBUTE_TYPE] as String
-        val missed: Double = (attributes[ATTRIBUTE_MISSED] as String).toDouble()
-        val covered: Double = (attributes[ATTRIBUTE_COVERED] as String).toDouble()
-        val total: Double = missed + covered
-        val percentage: Double = covered / total * 100
-
-        return Coverage(
-            type = type,
-            missed = missed.toLong(),
-            covered = covered.toLong(),
-            total = total.toLong(),
-            coverage = percentage,
-            coverageText = formatter.format(percentage)
+        return transformer.transform(
+            moduleName = moduleName,
+            coverageList = coverageList,
+            packages = packageCoverage
         )
     }
 
     companion object {
         private const val NODE_NAME_COUNTER = "counter"
-        private const val ATTRIBUTE_TYPE = "type"
-        private const val ATTRIBUTE_MISSED = "missed"
-        private const val ATTRIBUTE_COVERED = "covered"
+        private const val NODE_NAME_PACKAGE = "package"
         private const val ATTRIBUTE_NAME = "name"
     }
 }
