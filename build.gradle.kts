@@ -18,6 +18,7 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
     implementation("org.codehaus.groovy:groovy-xml:3.0.12")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
+    implementation("de.m3y.kformat:kformat:0.9")
 
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
