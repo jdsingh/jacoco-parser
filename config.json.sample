@@ -1,0 +1,18 @@
+{
+  "modules": [
+    "app",
+    "library-1"
+    "library-2"
+  ],
+  "owners": {
+    "team-1": [
+      "com.example.app.ui",
+      "com.example.app.domain"
+    ],
+    "team-2": [
+      "com.example.app.data",
+      "com.example.app.remote"
+    ]
+  },
+  "jacocoReportDir": "/Users/username/code/awesomeApp/build/jacoco"
+}

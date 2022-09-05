@@ -2,3 +2,4 @@
 build
 .gradle/
 report.xml
+config.json

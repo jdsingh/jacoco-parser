@@ -27,18 +27,12 @@ class JacocoParser {
 
         val result: GPathResult = slurper.parse(file)
         val moduleName = (result as NodeChild).attributes()[ATTRIBUTE_NAME] as String
-        val coverageList = mutableListOf<Coverage>()
+        val moduleCoverage = mutableListOf<Coverage>()
         val packageCoverage = mutableListOf<PackageCoverage>()
 
         result.children()
             .map { it as NodeChild }
-            .filter { node ->
-                val name = node.name()
-                val isCounter = name == NODE_NAME_COUNTER
-                val isPackage = name == NODE_NAME_PACKAGE
-
-                isCounter || isPackage
-            }
+            .filterOnlyPackageOrCounterNodes()
             .map { node ->
                 if (node.name() == NODE_NAME_PACKAGE) {
                     val packageName = node.attributes()[ATTRIBUTE_NAME] as String
@@ -53,21 +47,29 @@ class JacocoParser {
                             )
                         }
                 } else if (node.name() == NODE_NAME_COUNTER) {
-                    coverageList.add(coverageFactory.from(node))
+                    moduleCoverage.add(coverageFactory.from(node))
                 }
                 node
             }
 
         return transformer.transform(
             moduleName = moduleName,
-            coverageList = coverageList,
+            coverageList = moduleCoverage,
             packages = packageCoverage
         )
     }
+}
 
-    companion object {
-        private const val NODE_NAME_COUNTER = "counter"
-        private const val NODE_NAME_PACKAGE = "package"
-        private const val ATTRIBUTE_NAME = "name"
+private const val NODE_NAME_COUNTER = "counter"
+private const val NODE_NAME_PACKAGE = "package"
+private const val ATTRIBUTE_NAME = "name"
+
+fun List<NodeChild>.filterOnlyPackageOrCounterNodes(): List<NodeChild> {
+    return filter { node ->
+        val name = node.name()
+        val isCounter = name == NODE_NAME_COUNTER
+        val isPackage = name == NODE_NAME_PACKAGE
+
+        isCounter || isPackage
     }
 }

@@ -1,104 +1,103 @@
 package dev.jagdeepsingh.commands
 
-import com.github.ajalt.clikt.completion.CompletionCandidates
 import com.github.ajalt.clikt.completion.completionOption
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.output.TermUi
-import com.github.ajalt.clikt.output.defaultCliktConsole
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.arguments.multiple
-import com.github.ajalt.clikt.parameters.arguments.validate
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.versionOption
+import com.github.ajalt.clikt.core.context
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.enum
-import com.github.ajalt.clikt.parameters.types.file
-import de.m3y.kformat.Table
-import de.m3y.kformat.table
+import dev.jagdeepsingh.config.*
+import dev.jagdeepsingh.logger.DefaultLogger
+import dev.jagdeepsingh.logger.LogLevel
+import dev.jagdeepsingh.logger.Logger
 import dev.jagdeepsingh.parser.JacocoParser
 import dev.jagdeepsingh.parser.models.ModuleCoverage
+import dev.jagdeepsingh.printer.JsonCoveragePrinter
+import dev.jagdeepsingh.printer.TableCoveragePrinter
+import dev.jagdeepsingh.printer.TeamTableCoveragePrinter
+import dev.jagdeepsingh.printer.TextCoveragePrinter
+import java.text.DecimalFormat
 import kotlin.system.measureTimeMillis
 
+private enum class Format { TEAM_TABLE, MODULE_TABLE, TEXT, JSON }
+
 class JacocoParseCommand : CliktCommand(
-    name = "jacoco-parser",
-    printHelpOnEmptyArgs = true,
-    help = "Parse JaCoCo xml coverage report."
+    name = "jacoco-parser", help = "Parse JaCoCo xml coverage report."
 ) {
 
-    private val debug by option(
-        "-d", "--debug",
-        help = "Enable debug logging"
-    ).flag()
+    private val logLevel: LogLevel by option(
+        "-l", "--log", help = "Log level"
+    ).enum<LogLevel>().default(LogLevel.None)
 
     private val format: Format by option(
-        "-o", "--output",
-        help = "Output format",
-        completionCandidates = CompletionCandidates.Fixed("TABLE", "TEXT", "JSON")
-    ).enum<Format>().default(Format.TABLE)
+        "-o",
+        "--output",
+        help = "Output format"
+    ).enum<Format>().default(Format.TEAM_TABLE)
 
-    private val reports by argument(name = "jacoco-report.xml")
-        .file(mustExist = true, canBeFile = true)
-        .multiple(required = true)
-        .validate { files ->
-            require(files.all { it.extension == "xml" }) {
-                "report should be a xml file"
-            }
-        }
+    private val modules: List<String> by option("--modules", hidden = true).multiple()
+
+    private val jacocoReportDir: String? by option("--jacocoReportDir", hidden = true)
+
+    private val owners: Map<String, String> by option("--owners", hidden = true).associate()
 
     init {
         completionOption()
         versionOption(
-            version = "1.0.0",
-            names = setOf("-v", "--version")
+            version = "1.0.0", names = setOf("-v", "--version")
         )
+
+        context {
+            valueSources(
+                JsonValueSource.from(System.getProperty("user.dir") + "/config.json", requireValid = true),
+            )
+        }
     }
 
     override fun run() {
-        val time = measureTimeMillis { parseReport() }
-        if (debug) {
-            echo("Execution time: $time ms")
-        }
+        val logger: Logger = DefaultLogger(level = logLevel)
+
+        val time = measureTimeMillis { execute(logger) }
+        logger.logDebug("Execution time: $time ms")
+
     }
 
-    private fun parseReport() {
+    private fun execute(logger: Logger) {
         val parser = JacocoParser()
-        for (report in reports) {
-            val coverage: ModuleCoverage = parser.parse(report)
-            when (format) {
-                Format.JSON -> {
-                    echo(coverage.toJson())
-                }
+        val modulesConfigTransformer = ModulesConfigTransformer()
+        val reportDirConfigTransformer = ReportDirConfigTransformer()
 
-                Format.TEXT -> {
-                    echo(coverage)
-                }
+        val jacocoReportDir = try {
+            reportDirConfigTransformer.invoke(jacocoReportDir)
+        } catch (e: IllegalArgumentException) {
+            logger.logError(e.localizedMessage)
+            return
+        }
 
-                Format.TABLE -> {
-                    table {
-                        header(COLUMN_MODULE, COLUMN_PACKAGE, COLUMN_COVERAGE)
-                        for (p in coverage.packages) {
-                            row(coverage.moduleName, p.packageName, p.instruction.coverageInString)
-                        }
-                        header()
-                        header("Total", "", coverage.instruction.coverageInString)
+        val moduleNames: List<ModuleName> = modulesConfigTransformer.invoke(modules)
+        logger.logDebug("modules(${moduleNames.size}): $moduleNames")
 
-                        hints {
-                            alignment(COLUMN_MODULE, Table.Hints.Alignment.LEFT)
-                            alignment(COLUMN_PACKAGE, Table.Hints.Alignment.LEFT)
-                            alignment(COLUMN_COVERAGE, Table.Hints.Alignment.RIGHT)
-                            postfix(COLUMN_COVERAGE, "%")
-                            borderStyle = Table.BorderStyle.SINGLE_LINE
-                        }
-                    }.render().let { echo(it) }
-                }
-            }
+        val ownerConfig: OwnersConfig = OwnersConfigTransformer().invoke(owners)
+        logger.logDebug("owners(${ownerConfig.size}): $ownerConfig")
+
+        parseReport(parser, moduleNames, jacocoReportDir, ownerConfig)
+    }
+
+    private fun parseReport(
+        parser: JacocoParser,
+        modules: List<ModuleName>,
+        jacocoReportDir: JacocoReportDir,
+        ownerConfig: OwnersConfig
+    ) {
+        val coverage: List<ModuleCoverage> = modules.map { module ->
+            val report = jacocoReportDir.toFile(module)
+            parser.parse(report)
+        }
+
+        when (format) {
+            Format.JSON -> JsonCoveragePrinter().print(coverage)
+            Format.TEXT -> TextCoveragePrinter().print(coverage)
+            Format.MODULE_TABLE -> TableCoveragePrinter(ownerConfig).print(coverage)
+            Format.TEAM_TABLE -> TeamTableCoveragePrinter(ownerConfig, DecimalFormat("##.##")).print(coverage)
         }
     }
 }
-
-private const val COLUMN_MODULE = "Module"
-private const val COLUMN_PACKAGE = "Packages"
-private const val COLUMN_COVERAGE = "Coverage"
-
-private enum class Format { TABLE, TEXT, JSON }
