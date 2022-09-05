@@ -51,7 +51,7 @@ class JacocoParseCommand : CliktCommand(
     override fun run() {
         val time = measureTimeMillis { parseReport() }
         if (debug) {
-            println("Execution time: $time ms")
+            echo("Execution time: $time ms")
         }
     }
 
@@ -60,10 +60,10 @@ class JacocoParseCommand : CliktCommand(
         val coverage: ModuleCoverage = parser.parse(report)
         when (format) {
             Format.JSON -> {
-                println(coverage.toJson())
+                echo(coverage.toJson())
             }
             Format.TEXT -> {
-                println(coverage)
+                echo(coverage)
             }
         }
     }
