@@ -5,6 +5,7 @@ import de.m3y.kformat.table
 import dev.jagdeepsingh.config.OwnerName
 import dev.jagdeepsingh.config.OwnersConfig
 import dev.jagdeepsingh.config.PackageName
+import dev.jagdeepsingh.logger.Logger
 import dev.jagdeepsingh.parser.models.ModuleCoverage
 import java.text.DecimalFormat
 
@@ -30,7 +31,7 @@ class JsonCoveragePrinter : CoveragePrinter {
     }
 }
 
-class TableCoveragePrinter(private val ownerConfig: OwnersConfig) : CoveragePrinter {
+class ModuleTableCoveragePrinter(private val ownerConfig: OwnersConfig) : CoveragePrinter {
 
     override fun print(coverages: List<ModuleCoverage>) {
         table {
@@ -66,7 +67,8 @@ class TableCoveragePrinter(private val ownerConfig: OwnersConfig) : CoveragePrin
 
 class TeamTableCoveragePrinter(
     private val ownerConfig: OwnersConfig,
-    private val formatter: DecimalFormat
+    private val formatter: DecimalFormat,
+    private val logger: Logger
 ) : CoveragePrinter {
 
     override fun print(coverages: List<ModuleCoverage>) {
@@ -83,8 +85,10 @@ class TeamTableCoveragePrinter(
             }
 
             header()
-            line("Packages without teams: $packagesWithoutTeam")
-            line("Packages with teams: ${packagesWithTeam.size}")
+
+            logger.logInfo("Packages without teams: ${packagesWithoutTeam.size}")
+            logger.logInfo("Packages with teams: ${packagesWithTeam.size}")
+            logger.doIfDebug { packagesWithoutTeam.forEach(::logDebug) }
 
             hints {
                 alignment(COLUMN_TEAM, Table.Hints.Alignment.LEFT)
@@ -95,8 +99,8 @@ class TeamTableCoveragePrinter(
         }.render().let { println(it) }
     }
 
-    private fun mapCoverageToRows(coverages: List<ModuleCoverage>): Pair<Int, List<TableRow>> {
-        var packagesWithoutTeam = 0
+    private fun mapCoverageToRows(coverages: List<ModuleCoverage>): Pair<MutableList<String>, MutableList<TableRow>> {
+        val packagesWithoutTeam = mutableListOf<String>()
         val packagesWithTeam = mutableListOf<TableRow>()
 
         coverages.map { moduleCoverage ->
@@ -110,7 +114,7 @@ class TeamTableCoveragePrinter(
                         )
                     )
                 } else {
-                    packagesWithoutTeam++
+                    packagesWithoutTeam.add(p.packageName)
                 }
             }
         }

@@ -12,7 +12,7 @@ import dev.jagdeepsingh.logger.Logger
 import dev.jagdeepsingh.parser.JacocoParser
 import dev.jagdeepsingh.parser.models.ModuleCoverage
 import dev.jagdeepsingh.printer.JsonCoveragePrinter
-import dev.jagdeepsingh.printer.TableCoveragePrinter
+import dev.jagdeepsingh.printer.ModuleTableCoveragePrinter
 import dev.jagdeepsingh.printer.TeamTableCoveragePrinter
 import dev.jagdeepsingh.printer.TextCoveragePrinter
 import java.text.DecimalFormat
@@ -38,7 +38,7 @@ class JacocoParseCommand : CliktCommand(
 
     private val jacocoReportDir: String? by option("--jacocoReportDir", hidden = true)
 
-    private val owners: Map<String, String> by option("--owners", hidden = true).associate()
+    private val packageToTeamMap: Map<String, String> by option("--owners", hidden = true).associate()
 
     init {
         completionOption()
@@ -58,11 +58,11 @@ class JacocoParseCommand : CliktCommand(
 
         val time = measureTimeMillis { execute(logger) }
         logger.logDebug("Execution time: $time ms")
-
     }
 
     private fun execute(logger: Logger) {
-        val parser = JacocoParser()
+        val formatter = DecimalFormat("##.##")
+        val parser = JacocoParser(formatter = formatter)
         val modulesConfigTransformer = ModulesConfigTransformer()
         val reportDirConfigTransformer = ReportDirConfigTransformer()
 
@@ -76,14 +76,23 @@ class JacocoParseCommand : CliktCommand(
         val moduleNames: List<ModuleName> = modulesConfigTransformer.invoke(modules)
         logger.logDebug("modules(${moduleNames.size}): $moduleNames")
 
-        val ownerConfig: OwnersConfig = OwnersConfigTransformer().invoke(owners)
+        val ownerConfig: OwnersConfig = OwnersConfigTransformer().invoke(packageToTeamMap)
         logger.logDebug("owners(${ownerConfig.size}): $ownerConfig")
 
-        parseReport(parser, moduleNames, jacocoReportDir, ownerConfig)
+        parseReport(
+            parser = parser,
+            formatter = formatter,
+            logger = logger,
+            modules = moduleNames,
+            jacocoReportDir = jacocoReportDir,
+            ownerConfig = ownerConfig
+        )
     }
 
     private fun parseReport(
         parser: JacocoParser,
+        formatter: DecimalFormat,
+        logger: Logger,
         modules: List<ModuleName>,
         jacocoReportDir: JacocoReportDir,
         ownerConfig: OwnersConfig
@@ -96,8 +105,8 @@ class JacocoParseCommand : CliktCommand(
         when (format) {
             Format.JSON -> JsonCoveragePrinter().print(coverage)
             Format.TEXT -> TextCoveragePrinter().print(coverage)
-            Format.MODULE_TABLE -> TableCoveragePrinter(ownerConfig).print(coverage)
-            Format.TEAM_TABLE -> TeamTableCoveragePrinter(ownerConfig, DecimalFormat("##.##")).print(coverage)
+            Format.MODULE_TABLE -> ModuleTableCoveragePrinter(ownerConfig).print(coverage)
+            Format.TEAM_TABLE -> TeamTableCoveragePrinter(ownerConfig, formatter, logger).print(coverage)
         }
     }
 }

@@ -11,7 +11,7 @@ import groovy.xml.slurpersupport.NodeChild
 import java.io.File
 import java.text.DecimalFormat
 
-class JacocoParser {
+class JacocoParser(private val formatter: DecimalFormat) {
 
     private val slurper = XmlSlurper()
 
@@ -21,7 +21,6 @@ class JacocoParser {
     }
 
     fun parse(file: File): ModuleCoverage {
-        val formatter = DecimalFormat("##.##")
         val coverageFactory = CoverageFactory(formatter = formatter)
         val transformer = JacocoCoverageTransformer()
 

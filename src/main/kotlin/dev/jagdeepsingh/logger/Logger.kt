@@ -4,6 +4,8 @@ interface Logger {
     fun logDebug(log: String)
     fun logInfo(log: String)
     fun logError(log: String)
+    fun isDebug(): Boolean
+    fun doIfDebug(block: Logger.() -> Unit)
 }
 
 enum class LogLevel {
@@ -12,6 +14,16 @@ enum class LogLevel {
 }
 
 class DefaultLogger(private val level: LogLevel) : Logger {
+
+    override fun isDebug(): Boolean {
+        return level >= LogLevel.Debug
+    }
+
+    override fun doIfDebug(block: Logger.() -> Unit) {
+        if (isDebug()) {
+            block(this)
+        }
+    }
 
     override fun logDebug(log: String) {
         if (level >= LogLevel.Debug) {
