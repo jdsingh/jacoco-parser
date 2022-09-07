@@ -6,7 +6,8 @@ import java.io.File
 value class JacocoReportDir(private val dir: String) {
 
     fun toFile(module: ModuleName): File {
-        return File("$dir/$module/jacocoDebugReport/jacocoDebugReport.xml")
+        val path = dir.replace("{module}", module.name)
+        return File(path)
     }
 }
 

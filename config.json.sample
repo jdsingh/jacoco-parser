@@ -14,5 +14,5 @@
       "com.example.app.remote"
     ]
   },
-  "jacocoReportDir": "/Users/username/code/awesomeApp/build/jacoco"
+  "jacocoReportDir": "/Users/username/code/awesomeApp/build/jacoco/{module}/jacocoDebugReport/jacocoDebugReport.xml"
 }
